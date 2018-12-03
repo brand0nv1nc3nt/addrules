@@ -1,0 +1,28 @@
+#! /usr/bin/env python3
+# Brandon Vincent 12/2/18
+# adds ufw rules from a list of cidr IP ranges
+# IP lists can be found at https://www.countryipblocks.net/country_selection.php
+# syntax: addrules <list>
+
+import sys
+import os
+
+if os.geteuid() != 0:
+	print("please run as root")
+	exit()
+
+try:
+	ruleList = open(sys.argv[1], "r").read().split("\n") # open ruleFile as a list
+except FileNotFoundError:
+	print("Cant open rule file "+sys.argv[1])
+	exit()
+except IndexError:
+	print("syntax: addrules <ruleList>")
+	exit()
+
+numLines = sum(1 for line in ruleList)
+print("adding "+str(numLines)+" rules from "+sys.argv[1])
+
+for line in ruleList:
+	print(str(round(float(int(ruleList.index(line)+1)/numLines * 100), 3))+"% done, blocking"+line+"             ", end="\r") # give status updates, spaces ensure entire line gets re-written
+	os.system("ufw insert 1 deny from "+line+" to any > /dev/null") # quietly insert firewall rules one at a time to the top of the list
